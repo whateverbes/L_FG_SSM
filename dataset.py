@@ -103,12 +103,24 @@ class MaritimeDataset(Dataset):
 
         elif self.mode == 'LIACI':
             mask = cv2.imread(item['mask'], 0)
-            mask = cv2.resize(mask, self.target_size, interpolation=cv2.INTER_NEAREST)
-            # 将该掩码区域标记为对应的类别 ID (1, 2, 3, 或 4)
-            # LIACI 的 bmp 掩码通常是 255 表示目标区域
-            final_mask = np.zeros(self.target_size, dtype=np.int64)
-            final_mask[mask > 0] = item['label']
 
-            raw_tensor = torch.from_numpy(raw_img).permute(2, 0, 1).float() / 255.0
-            mask_tensor = torch.from_numpy(final_mask).long()
-            return raw_tensor, mask_tensor
+            # 【核心修正】：强制数值转换
+            # 如果你的 Mask 是二值的(0黑, 255白)，这里把 255 变成 1 (或者对应的缺陷类别)
+            # 如果你的 Mask 已经是 0,1,2,3,4 了，这行代码也不会报错，属于安全防御
+            mask[mask > 0] = 1  # 假设暂时只分“有缺陷(1)”和“无缺陷(0)”
+            # 如果你有多种缺陷且 Mask 已经是 1,2,3,4，请注释掉上面这行，改用下面的：
+            # mask[mask == 255] = 1 # 仅把 255 修正为 1
+
+            # Resize (使用 NEAREST 防止插值产生小数)
+            mask = cv2.resize(mask, self.target_size, interpolation=cv2.INTER_NEAREST)
+
+            # 转为 LongTensor (这是 CrossEntropyLoss 必须的)
+            mask_tensor = torch.from_numpy(mask).long()
+
+            # 处理 Image
+            img = cv2.imread(item['img'])
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.resize(img, self.target_size)
+            img_tensor = torch.from_numpy(img).permute(2, 0, 1).float() / 255.0
+
+            return img_tensor, mask_tensor
