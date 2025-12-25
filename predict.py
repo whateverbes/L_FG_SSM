@@ -102,10 +102,10 @@ if __name__ == "__main__":
     test_images_dir = "data/LIACI/test"
 
     # 2. 结果保存位置
-    save_dir = "results/uieb"
-    #save_dir = "results/liaci"
+    #save_dir = "results/uieb"
+    save_dir = "results"
     # 3. 模型权重路径 (已修改为指向 checkpoints 文件夹)
     # 如果你想测试 UIEB 阶段的效果，可以改为 'checkpoints/uieb_best.pth'
-    #model_path = "checkpoints/liaci_best.pth"
-    model_path = "checkpoints/uieb_best.pth"
+    model_path = "checkpoints/liaci_best.pth"
+    #model_path = "checkpoints/uieb_best.pth"
     predict_folder(test_images_dir, save_dir, model_path)
